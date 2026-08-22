@@ -1,11 +1,4 @@
-/**
- * Minimal API client for the Multi-Talent SaaS Platform frontend.
- * Talks to the Spring Boot backend (fronted by the API Gateway in prod).
- */
-// With microservices there's no single backend origin — the frontend is
-// always served through nginx (or the k8s Ingress), which routes each
-// /api/<service> path prefix to the right microservice. See
-// frontend/nginx.conf and k8s/30-ingress.yaml.
+
 const API_BASE_URL = window.APP_CONFIG?.API_BASE_URL || '/api';
 
 const Storage = {
