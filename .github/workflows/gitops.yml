@@ -16,12 +16,8 @@ on:
 permissions:
   contents: write
 
-env:
-  DOCKER_USERNAME: jayantmule02
-
 jobs:
 
- 
 
   build-and-push:
     name: Build & Push Docker Images
@@ -29,15 +25,11 @@ jobs:
 
     steps:
 
-    
       - name: Checkout repository
         uses: actions/checkout@v4
 
-   
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-   
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -45,8 +37,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-
-
+  
       - name: Build and Push Frontend
         uses: docker/build-push-action@v6
         with:
@@ -59,7 +50,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-     
+ 
 
       - name: Build and Push Auth Service
         uses: docker/build-push-action@v6
@@ -87,7 +78,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-    
+     
 
       - name: Build and Push Project Service
         uses: docker/build-push-action@v6
@@ -101,7 +92,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-    
+  
 
       - name: Build and Push Email Service
         uses: docker/build-push-action@v6
@@ -128,7 +119,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      
+    
 
       - name: Build and Push Analytics Service
         uses: docker/build-push-action@v6
@@ -143,7 +134,7 @@ jobs:
           cache-to: type=gha,mode=max
 
 
-
+ 
 
   update-manifests:
     name: Update Kubernetes Image Tags
@@ -152,54 +143,75 @@ jobs:
 
     steps:
 
-
-
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    
+
 
       - name: Update Kubernetes images
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
 
-          echo "Updating Kubernetes manifests..."
+          echo "========================================"
+          echo "Updating Kubernetes images"
+          echo "Image tag: ${IMAGE_TAG}"
+          echo "========================================"
+
+          # Auth
+          sed -i "s|^[[:space:]]*image:.*|          image: jayantmule02/auth-service:${IMAGE_TAG}|" \
+            k8s/auth.yml
+
+          # Tenant
+          sed -i "s|^[[:space:]]*image:.*|          image: jayantmule02/tenant-service:${IMAGE_TAG}|" \
+            k8s/tenant.yml
+
+          # Project
+          sed -i "s|^[[:space:]]*image:.*|          image: jayantmule02/project-service:${IMAGE_TAG}|" \
+            k8s/project.yml
+
+          # Email
+          sed -i "s|^[[:space:]]*image:.*|          image: jayantmule02/email-service:${IMAGE_TAG}|" \
+            k8s/email.yml
+
+          # Audit
+          sed -i "s|^[[:space:]]*image:.*|          image: jayantmule02/audit-service:${IMAGE_TAG}|" \
+            k8s/audit.yml
+
+          # Analytics
+          sed -i "s|^[[:space:]]*image:.*|          image: jayantmule02/analytics-service:${IMAGE_TAG}|" \
+            k8s/analytics.yml
 
           # Frontend
-          find k8s -type f -name "*.yml" -exec sed -i \
-            "s|jayantmule02/frontend:[^[:space:]]*|jayantmule02/frontend:${IMAGE_TAG}|g" {} \;
+          sed -i "s|^[[:space:]]*image:.*|          image: jayantmule02/frontend:${IMAGE_TAG}|" \
+            k8s/frontend.yml
 
-          # Auth service
-          find k8s -type f -name "*.yml" -exec sed -i \
-            "s|jayantmule02/auth-service:[^[:space:]]*|jayantmule02/auth-service:${IMAGE_TAG}|g" {} \;
 
-          # Tenant service
-          find k8s -type f -name "*.yml" -exec sed -i \
-            "s|jayantmule02/tenant-service:[^[:space:]]*|jayantmule02/tenant-service:${IMAGE_TAG}|g" {} \;
 
-          # Project service
-          find k8s -type f -name "*.yml" -exec sed -i \
-            "s|jayantmule02/project-service:[^[:space:]]*|jayantmule02/project-service:${IMAGE_TAG}|g" {} \;
+      - name: Verify Kubernetes images
+        run: |
 
-          # Email service
-          find k8s -type f -name "*.yml" -exec sed -i \
-            "s|jayantmule02/email-service:[^[:space:]]*|jayantmule02/email-service:${IMAGE_TAG}|g" {} \;
+          echo "========================================"
+          echo "Kubernetes images after update"
+          echo "========================================"
 
-          # Audit service
-          find k8s -type f -name "*.yml" -exec sed -i \
-            "s|jayantmule02/audit-service:[^[:space:]]*|jayantmule02/audit-service:${IMAGE_TAG}|g" {} \;
+          grep -R "image:" k8s/
 
-          # Analytics service
-          find k8s -type f -name "*.yml" -exec sed -i \
-            "s|jayantmule02/analytics-service:[^[:space:]]*|jayantmule02/analytics-service:${IMAGE_TAG}|g" {} \;
+          echo ""
+          echo "========================================"
+          echo "Git diff"
+          echo "========================================"
 
-          echo "Updated images:"
-          grep -R "image: jayantmule02/" k8s/ || true
+          git diff -- k8s/
 
-     
+
+    
 
       - name: Commit Kubernetes changes
+        env:
+          IMAGE_TAG: ${{ github.sha }}
         run: |
 
           git config user.name "github-actions[bot]"
@@ -208,8 +220,10 @@ jobs:
           git add k8s/
 
           if git diff --cached --quiet; then
-            echo "No Kubernetes manifest changes detected."
-          else
-            git commit -m "chore: update images to ${GITHUB_SHA}"
-            git push
+            echo "No Kubernetes changes detected."
+            exit 0
           fi
+
+          git commit -m "chore: update images to ${IMAGE_TAG}"
+
+          git push origin HEAD:main
