@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shared-config
+  namespace: multi-talent-saas
+data:
+  MYSQL_HOST: "mysql-service"
+  MYSQL_PORT: "3306"
+  MONGO_HOST: "mongodb-service"
+  MONGO_PORT: "27017"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-service:9092"
+  JWT_EXPIRATION_MS: "86400000"
+  TENANT_SERVICE_URL: "http://tenant-service:8082"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: multi-talent-saas
+data:
+  API_BASE_URL: "/api"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: shared-secrets
+  namespace: multi-talent-saas
+type: Opaque
+stringData:
+  MYSQL_ROOT_PASSWORD: "root_password"
+  MYSQL_USER: "mt_admin"
+  MYSQL_PASSWORD: "mt_admin_password"
+  MONGO_USER: "admin"
+  MONGO_PASSWORD: "admin_password"
+  REDIS_PASSWORD: ""
+  JWT_SECRET: "LocalDevSecretKeyChangeInProduction123456789"
+  SMTP_USER: ""
+  SMTP_PASSWORD: ""
