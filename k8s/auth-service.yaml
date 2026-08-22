@@ -18,7 +18,7 @@ spec:
       containers:
         - name: auth-service
 
-          image: jayantmule02/auth-service:latest
+          image: uth-service:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8081
