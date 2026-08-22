@@ -1,0 +1,215 @@
+name: GitOps CI/CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "frontend/**"
+      - "backend/**"
+      - "k8s/**"
+      - "argocd/**"
+      - ".github/workflows/gitops.yml"
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  DOCKER_USERNAME: jayantmule02
+
+jobs:
+
+ 
+
+  build-and-push:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+
+    steps:
+
+    
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+   
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+   
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+
+
+      - name: Build and Push Frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            jayantmule02/frontend:latest
+            jayantmule02/frontend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+     
+
+      - name: Build and Push Auth Service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/auth-service/Dockerfile
+          push: true
+          tags: |
+            jayantmule02/auth-service:latest
+            jayantmule02/auth-service:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+    
+
+      - name: Build and Push Tenant Service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/tenant-service/Dockerfile
+          push: true
+          tags: |
+            jayantmule02/tenant-service:latest
+            jayantmule02/tenant-service:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+    
+
+      - name: Build and Push Project Service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/project-service/Dockerfile
+          push: true
+          tags: |
+            jayantmule02/project-service:latest
+            jayantmule02/project-service:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+    
+
+      - name: Build and Push Email Service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/email-service/Dockerfile
+          push: true
+          tags: |
+            jayantmule02/email-service:latest
+            jayantmule02/email-service:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+
+      - name: Build and Push Audit Service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/audit-service/Dockerfile
+          push: true
+          tags: |
+            jayantmule02/audit-service:latest
+            jayantmule02/audit-service:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      
+
+      - name: Build and Push Analytics Service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/analytics-service/Dockerfile
+          push: true
+          tags: |
+            jayantmule02/analytics-service:latest
+            jayantmule02/analytics-service:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+
+
+
+  update-manifests:
+    name: Update Kubernetes Image Tags
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+
+
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+    
+
+      - name: Update Kubernetes images
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+
+          echo "Updating Kubernetes manifests..."
+
+          # Frontend
+          find k8s -type f -name "*.yml" -exec sed -i \
+            "s|jayantmule02/frontend:[^[:space:]]*|jayantmule02/frontend:${IMAGE_TAG}|g" {} \;
+
+          # Auth service
+          find k8s -type f -name "*.yml" -exec sed -i \
+            "s|jayantmule02/auth-service:[^[:space:]]*|jayantmule02/auth-service:${IMAGE_TAG}|g" {} \;
+
+          # Tenant service
+          find k8s -type f -name "*.yml" -exec sed -i \
+            "s|jayantmule02/tenant-service:[^[:space:]]*|jayantmule02/tenant-service:${IMAGE_TAG}|g" {} \;
+
+          # Project service
+          find k8s -type f -name "*.yml" -exec sed -i \
+            "s|jayantmule02/project-service:[^[:space:]]*|jayantmule02/project-service:${IMAGE_TAG}|g" {} \;
+
+          # Email service
+          find k8s -type f -name "*.yml" -exec sed -i \
+            "s|jayantmule02/email-service:[^[:space:]]*|jayantmule02/email-service:${IMAGE_TAG}|g" {} \;
+
+          # Audit service
+          find k8s -type f -name "*.yml" -exec sed -i \
+            "s|jayantmule02/audit-service:[^[:space:]]*|jayantmule02/audit-service:${IMAGE_TAG}|g" {} \;
+
+          # Analytics service
+          find k8s -type f -name "*.yml" -exec sed -i \
+            "s|jayantmule02/analytics-service:[^[:space:]]*|jayantmule02/analytics-service:${IMAGE_TAG}|g" {} \;
+
+          echo "Updated images:"
+          grep -R "image: jayantmule02/" k8s/ || true
+
+     
+
+      - name: Commit Kubernetes changes
+        run: |
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add k8s/
+
+          if git diff --cached --quiet; then
+            echo "No Kubernetes manifest changes detected."
+          else
+            git commit -m "chore: update images to ${GITHUB_SHA}"
+            git push
+          fi
