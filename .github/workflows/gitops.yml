@@ -18,6 +18,7 @@ permissions:
 
 jobs:
 
+ 
 
   build-and-push:
     name: Build & Push Docker Images
@@ -37,7 +38,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-  
+
       - name: Build and Push Frontend
         uses: docker/build-push-action@v6
         with:
@@ -50,7 +51,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
- 
+
 
       - name: Build and Push Auth Service
         uses: docker/build-push-action@v6
@@ -64,7 +65,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-    
+     
 
       - name: Build and Push Tenant Service
         uses: docker/build-push-action@v6
@@ -78,7 +79,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-     
 
       - name: Build and Push Project Service
         uses: docker/build-push-action@v6
@@ -92,7 +92,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  
+     
 
       - name: Build and Push Email Service
         uses: docker/build-push-action@v6
@@ -106,6 +106,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+     
 
       - name: Build and Push Audit Service
         uses: docker/build-push-action@v6
@@ -119,7 +120,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-    
+     
 
       - name: Build and Push Analytics Service
         uses: docker/build-push-action@v6
@@ -137,7 +138,7 @@ jobs:
  
 
   update-manifests:
-    name: Update Kubernetes Image Tags
+    name: Update Kubernetes Images
     runs-on: ubuntu-latest
     needs: build-and-push
 
@@ -148,68 +149,69 @@ jobs:
         with:
           fetch-depth: 0
 
-
+  
 
       - name: Update Kubernetes images
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
 
-          echo "========================================"
+          echo "=========================================="
           echo "Updating Kubernetes images"
-          echo "Image tag: ${IMAGE_TAG}"
-          echo "========================================"
+          echo "IMAGE TAG: ${IMAGE_TAG}"
+          echo "=========================================="
 
           # Auth
           sed -i "s|^[[:space:]]*image:.*|          image: jayantmule02/auth-service:${IMAGE_TAG}|" \
-            k8s/auth.yml
+            k8s/auth-service.yaml
 
           # Tenant
           sed -i "s|^[[:space:]]*image:.*|          image: jayantmule02/tenant-service:${IMAGE_TAG}|" \
-            k8s/tenant.yml
+            k8s/tenant-service.yaml
 
           # Project
           sed -i "s|^[[:space:]]*image:.*|          image: jayantmule02/project-service:${IMAGE_TAG}|" \
-            k8s/project.yml
+            k8s/project-service.yaml
 
           # Email
           sed -i "s|^[[:space:]]*image:.*|          image: jayantmule02/email-service:${IMAGE_TAG}|" \
-            k8s/email.yml
+            k8s/email-service.yaml
 
           # Audit
           sed -i "s|^[[:space:]]*image:.*|          image: jayantmule02/audit-service:${IMAGE_TAG}|" \
-            k8s/audit.yml
+            k8s/audit-service.yaml
 
           # Analytics
           sed -i "s|^[[:space:]]*image:.*|          image: jayantmule02/analytics-service:${IMAGE_TAG}|" \
-            k8s/analytics.yml
+            k8s/analytics-service.yaml
 
           # Frontend
           sed -i "s|^[[:space:]]*image:.*|          image: jayantmule02/frontend:${IMAGE_TAG}|" \
-            k8s/frontend.yml
+            k8s/frontend.yaml
 
 
+     
 
       - name: Verify Kubernetes images
         run: |
 
-          echo "========================================"
-          echo "Kubernetes images after update"
-          echo "========================================"
+          echo "=========================================="
+          echo "UPDATED KUBERNETES IMAGES"
+          echo "=========================================="
 
           grep -R "image:" k8s/
 
           echo ""
-          echo "========================================"
-          echo "Git diff"
-          echo "========================================"
+          echo "=========================================="
+          echo "GIT DIFF"
+          echo "=========================================="
 
           git diff -- k8s/
 
 
-    
+     
 
-      - name: Commit Kubernetes changes
+      - name: Commit and push Kubernetes changes
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
