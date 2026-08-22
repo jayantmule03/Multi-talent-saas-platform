@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Multi-Talent SaaS Platform — Create Account</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <h1>Create your workspace</h1>
+    <p class="subtitle">Step 1: set up your organization, then create your admin account</p>
+
+    <div id="alertBox"></div>
+
+    <form id="tenantForm">
+      <div class="form-group">
+        <label for="orgName">Organization name</label>
+        <input type="text" id="orgName" required placeholder="Jayant Inc." />
+      </div>
+      <div class="form-group">
+        <label for="orgSlug">Workspace slug</label>
+        <input type="text" id="orgSlug" required placeholder="Jayant-inc" pattern="[a-z0-9\-]+" />
+      </div>
+      <div class="form-group">
+        <label for="fullName">Your full name</label>
+        <input type="text" id="fullName" required placeholder="Jayant mule" />
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" required placeholder="you@company.com" />
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" required minlength="8" placeholder="At least 8 characters" />
+      </div>
+      <button type="submit" class="btn" id="registerBtn">Create Account</button>
+    </form>
+
+    <p class="form-footer">
+      Already have an account? <a href="index.html">Sign in</a>
+    </p>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+  const form = document.getElementById('tenantForm');
+  const alertBox = document.getElementById('alertBox');
+  const registerBtn = document.getElementById('registerBtn');
+
+  function showAlert(message, type = 'error') {
+    alertBox.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+  }
+
+  document.getElementById('orgName').addEventListener('input', (e) => {
+    document.getElementById('orgSlug').value = e.target.value
+      .toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    alertBox.innerHTML = '';
+    registerBtn.disabled = true;
+    registerBtn.textContent = 'Creating account...';
+
+    try {
+      // 1. Create the tenant/workspace
+      await Api.createTenant({
+        name: document.getElementById('orgName').value,
+        slug: document.getElementById('orgSlug').value
+      });
+
+      // 2. Register the admin user under that tenant
+      const data = await Api.register({
+        fullName: document.getElementById('fullName').value,
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value,
+        tenantSlug: document.getElementById('orgSlug').value
+      });
+
+      Storage.setToken(data.token);
+      Storage.setUser(data);
+      window.location.href = 'dashboard.html';
+    } catch (err) {
+      showAlert(err.message);
+    } finally {
+      registerBtn.disabled = false;
+      registerBtn.textContent = 'Create Account';
+    }
+  });
+</script>
+</body>
+</html>

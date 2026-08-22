@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard — Multi-Talent SaaS Platform</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span> Multi-Talent SaaS</div>
+    <nav>
+      <a href="dashboard.html" class="active">Dashboard</a>
+      <a href="#" id="logoutLink">Logout</a>
+    </nav>
+    <div class="user-box">
+      <div id="userName">—</div>
+      <div id="userEmail">—</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <h2>Projects</h2>
+      <button class="btn" style="width:auto;padding:10px 20px;" id="newProjectBtn">+ New Project</button>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="label">Total Projects</div>
+        <div class="value" id="statTotal">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">In Progress</div>
+        <div class="value" id="statInProgress">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Completed</div>
+        <div class="value" id="statCompleted">0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>All Projects</h3>
+      </div>
+      <div id="projectGrid" class="project-grid"></div>
+      <div id="emptyState" class="empty-state" style="display:none;">
+        No projects yet — create your first one to get started.
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- New / Edit Project Modal -->
+<div class="modal-overlay" id="projectModal">
+  <div class="modal">
+    <h3 id="modalTitle">New Project</h3>
+    <div id="modalAlert"></div>
+    <form id="projectForm">
+      <input type="hidden" id="projectId" />
+      <div class="form-group">
+        <label for="projectName">Project name</label>
+        <input type="text" id="projectName" required placeholder="Website Redesign" />
+      </div>
+      <div class="form-group">
+        <label for="projectDescription">Description</label>
+        <input type="text" id="projectDescription" placeholder="Optional description" />
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button type="button" class="btn btn-secondary" id="cancelModalBtn">Cancel</button>
+        <button type="submit" class="btn" id="saveProjectBtn">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
