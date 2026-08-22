@@ -5,8 +5,6 @@ WORKDIR /app
 
 COPY . .
 
-# Placeholder for a real build step if the frontend
-# grows into a framework-based application later.
 
 
 # ---------- Stage 2: Serve with nginx ----------
