@@ -18,7 +18,7 @@ spec:
       containers:
         - name: email-service
           # Build from the project root: docker build -f email-service/Dockerfile -t <registry>/email-service:1.0.0 .
-          image: multi-talent-saas-email-service:1.0.0
+          image: jayantmule02/email-service:a51ee5ca8fa691c9a2cfe221ba8967b06094fd10
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8084
