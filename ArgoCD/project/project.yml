@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1 # API version for ArgoCD Projects
+kind: AppProject               # Kind is always AppProject for Projects
+metadata:
+  name: multi-talent-saas-project          # Name of the Project (unique within ArgoCD)
+  namespace: argocd            # Must always be created in ArgoCD's namespace
+spec:
+  description: Project for multi-talent-saas   # Optional description
+  sourceRepos:                 # Which Git repos are allowed for this Project
+    - https://github.com/jayantmule03/Multi-talent-saas-platform.git
+  destinations:                # Which clusters/namespaces apps in this Project can target
+    - namespace: multi-talent-saas
+      server: https://kubernetes.default.svc  # Target cluster server url
+  clusterResourceWhitelist:    # Which cluster-wide resources are allowed (e.g., CRDs)
+    - group: "*"               # '*' means allow all groups
+      kind: "*"                # '*' means allow all kinds
+  namespaceResourceWhitelist:  # Which namespace-level resources are allowed
+    - group: "*"               # Here also allowing everything
+      kind: "*"
+  roles:                       # Define roles for RBAC within this Project
+    - name: multi-talent-saas-project-admins    # Role name
+      description: Admins for multi-talent-saas-project team
+      policies:                # Policies associated with this role
+        # syntax: - p, proj:<project-name>:<role-name>, applications, <action>, <project>/<app-name>, permission(allow|deny)
+        - p, proj:multi-talent-saas-project:multi-talent-saas-project-admins, applications, *, multi-talent-saas-project/*, allow

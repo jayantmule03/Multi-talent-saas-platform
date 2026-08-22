@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: multi-talent-saas
+  namespace: argocd
+spec:
+  project: multi-talent-saas-project
+  source:
+    repoURL: https://github.com/jayantmule03/Multi-talent-saas-platform.git
+    targetRevision: main
+    path: k8s
+  destination:
+    server: https://kubernetes.default.svc  # Replace with your Cluster Url, To get run: `argocd cluster list`
+    namespace: multi-talent-saas
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
